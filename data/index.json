@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "translation": null,
+  "builtin": false,
+  "note": "이 저장소는 앱 껍데기만 배포합니다. 성경 본문 JSON은 포함되어 있지 않으며, 앱에서 직접 TXT를 불러와 기기에 저장해 읽습니다.",
+  "books": []
+}

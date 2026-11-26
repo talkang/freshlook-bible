@@ -1,0 +1,19 @@
+{
+  "name": "FreshLook 성경",
+  "short_name": "FreshLook",
+  "description": "가지고 있는 성경 TXT를 불러와 FreshLook 서식(대화·시·편지 조판, 색상 코드, 다크/화이트)으로 읽는 한국어 성경 PWA. 앱에는 본문이 들어 있지 않습니다.",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D0F14",
+  "theme_color": "#000000",
+  "categories": ["books", "lifestyle", "education"],
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>FreshLook 성경 — 내 TXT로 읽기</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
+<meta name="theme-color" content="#000000">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="가지고 있는 성경 TXT를 불러와 FreshLook 서식(대화·시·편지 조판, 8색 코드, 다크/화이트)으로 읽는 한국어 성경 PWA. 앱에는 본문이 들어 있지 않으며 불러온 본문은 기기에만 저장됩니다.">
+<script>
+/* 저장된 테마를 첫 화면 전에 적용합니다 (저장소가 막히면 무시하고 다크) */
+(function(){try{if(localStorage.getItem('fl.theme.v1')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();
+</script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<link rel="stylesheet" href="assets/css/app.css">
+<link rel="stylesheet" href="assets/css/print.css">
+</head>
+<body>
+
+<header class="bar">
+  <button class="icon" id="btn-menu" aria-label="책 선택">☰</button>
+  <button class="title" id="btn-overview" aria-label="책 개요">
+    <span class="bname" id="topBook">창세기</span>
+    <span class="chnum" id="topChap">1</span>
+  </button>
+  <div class="right">
+    <button class="chipbtn" id="btn-theme" type="button" aria-label="화이트 모드로 전환" aria-pressed="false" title="화이트 모드로 전환"><span class="tglyph" aria-hidden="true">☀</span><span id="btn-theme-tx">화이트</span></button>
+    <button class="chipbtn" id="btn-mode" data-mode="all">전체 색상</button>
+    <button class="icon" id="btn-settings" aria-label="읽기 설정">⚙</button>
+  </div>
+</header>
+
+<div id="progressbar" style="position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,#8C7546,#C9A96A);z-index:45;transition:width .1s"></div>
+
+<main id="reader">
+  <section id="welcome" hidden>
+    <div class="wl">
+      <div class="wl-eyebrow">FRESHLOOK · KOREAN BIBLE PWA</div>
+      <h1 class="wl-title">내 성경 TXT로 읽는<br>FreshLook 조판 성경</h1>
+      <p class="wl-lead">이 앱은 성경 본문을 담고 있지 않습니다. 가지고 있는 성경 TXT 파일을 한 번 불러오면 66권 전체를 대화·시·편지 조판과 8색 색상 코드로 읽고, 검색하고, 인쇄하거나 PDF로 저장할 수 있습니다.</p>
+      <button class="wl-import" id="btn-import-main">📄 내 새번역 TXT 파일 불러오기</button>
+      <p class="wl-note">불러온 본문은 <b>이 기기의 브라우저 저장소</b>에만 저장되고 어디로도 전송되지 않습니다. 한 번 불러오면 인터넷 없이도 열립니다.</p>
+      <ul class="wl-points">
+        <li><span>66권 · 1,189장</span>목차와 장 이동</li>
+        <li><span>전체 검색</span>구절을 찾아 바로 이동</li>
+        <li><span>8색 코드</span>하나님·예수·성령·화자·지명·때</li>
+        <li><span>다크 / 화이트</span>읽기 설정과 기억</li>
+        <li><span>출력 / PDF</span>책별 여백성경 조판</li>
+        <li><span>오프라인</span>홈 화면에 추가해 앱처럼</li>
+      </ul>
+      <p class="wl-fine">지원하는 파일은 장·절 머리말이 있는 TXT입니다(예: <code>01 0:0 창세기,창,50</code>). 불러온 본문의 저작권은 해당 권리자에게 있으며, 이 앱은 본문 파일을 배포하지 않습니다. 각자 정당하게 가진 파일을 사용하세요.</p>
+    </div>
+  </section>
+  <article id="chapter"></article>
+</main>
+
+<nav class="bottom">
+  <button id="btn-prev" class="nav" aria-label="이전 장">‹</button>
+  <button id="btn-menu2"><span class="glyph">☰</span>목차</button>
+  <button id="btn-search"><span class="glyph">⌕</span>검색</button>
+  <button id="btn-legend"><span class="glyph">◐</span>색상</button>
+  <button id="btn-next" class="nav" aria-label="다음 장">›</button>
+</nav>
+
+<div class="veil" id="veil"></div>
+
+<!-- 목차 -->
+<section class="sheet" id="sheet-menu">
+  <div class="grab"></div>
+  <h2>성경 찾기 <span class="sub" id="menuSub">구약 39권 · 신약 27권</span></h2>
+  <div class="tabs">
+    <button class="on" data-testament="ot">구약</button>
+    <button data-testament="nt">신약</button>
+  </div>
+  <div class="bookgrid" id="bookgrid"></div>
+  <div id="chapterpick" style="display:none">
+    <h2 style="margin-top:18px"><span id="pickTitle">창세기</span><button class="chipbtn" id="pickBack">‹ 책 목록</button></h2>
+    <div class="chgrid" id="chgrid"></div>
+  </div>
+</section>
+
+<!-- 설정 -->
+<section class="sheet" id="sheet-settings">
+  <div class="grab"></div>
+  <h2>읽기 설정 <span class="sub" id="themeSub">Dark Mode</span></h2>
+  <div class="row">
+    <div><div class="lab">화면 테마</div><div class="hint">검정 바탕(다크)과 종이 같은 흰 바탕(화이트)</div></div>
+    <div class="seg" id="seg-theme">
+      <button data-v="dark" class="on">다크</button>
+      <button data-v="light">화이트</button>
+    </div>
+  </div>
+  <div class="row">
+    <div><div class="lab">색상 코드</div><div class="hint">단어별 색으로 인물·때·장소를 구분합니다</div></div>
+    <div class="seg" id="seg-mode">
+      <button data-v="all" class="on">전체</button>
+      <button data-v="essential">핵심</button>
+      <button data-v="plain">기본</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="lab">글자 크기</div>
+    <div class="stepper"><button id="fs-down">−</button><span id="fs-val">17</span><button id="fs-up">+</button></div>
+  </div>
+  <div class="row">
+    <div class="lab">글꼴</div>
+    <div class="seg" id="seg-fam">
+      <button data-v="serif" class="on">명조</button>
+      <button data-v="sans">고딕</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="lab">행간</div>
+    <div class="seg" id="seg-lh">
+      <button data-v="1.75">조밀</button>
+      <button data-v="1.95" class="on">보통</button>
+      <button data-v="2.15">넉넉</button>
+    </div>
+  </div>
+  <div class="row">
+    <div><div class="lab">각주 표시</div><div class="hint">본문의 작은 각주 칩을 보이거나 숨깁니다</div></div>
+    <div class="seg" id="seg-fn"><button data-v="1" class="on">표시</button><button data-v="0">숨김</button></div>
+  </div>
+  <div class="row" id="row-print">
+    <div><div class="lab">🖨️ 출력 / PDF</div><div class="hint">책별 여백성경으로 조판해 인쇄하거나 PDF로 저장합니다</div></div>
+    <button class="chipbtn" id="btn-print">열기</button>
+  </div>
+  <div class="row">
+    <div><div class="lab">내 새번역 TXT 불러오기</div><div class="hint">가진 TXT를 이 기기에만 저장해 씁니다(서버 전송 없음)</div></div>
+    <button class="chipbtn" id="btn-import">파일 선택</button>
+  </div>
+  <div class="row" id="row-reset" style="display:none">
+    <div><div class="lab">내장 본문으로 되돌리기</div><div class="hint" id="customName">불러온 본문 사용 중</div></div>
+    <button class="chipbtn" id="btn-reset">되돌리기</button>
+  </div>
+  <div class="row" id="row-install" style="display:none">
+    <div><div class="lab">홈 화면에 추가</div><div class="hint">오프라인에서도 성경을 열 수 있습니다</div></div>
+    <button class="chipbtn" id="btn-install">설치</button>
+  </div>
+  <div class="row">
+    <div class="lab">정보</div>
+    <div class="hint" style="text-align:right">본문 미포함 · 불러온 본문 © 해당 권리자<br>FreshLook 조판 · PWA v1.3</div>
+  </div>
+  <input type="file" id="file-input" accept=".txt,text/plain" hidden>
+</section>
+
+<!-- 색상 범례 -->
+<section class="sheet" id="sheet-legend">
+  <div class="grab"></div>
+  <h2>색상 범례 <span class="sub">Color Code</span></h2>
+  <div id="legendBody" class="legend"></div>
+  <p style="font-family:var(--fam);font-size:12px;line-height:1.9;color:var(--ink-faint);margin:16px 0 0">
+    가장 핵심적이고 구체적인 정보일수록 밝은 색으로, 일반적인 정보일수록 은은하게 표시합니다.
+    색은 규칙에 따라 자동으로 붙으며, 같은 단어라도 문맥에 따라 달라질 수 있습니다.
+  </p>
+</section>
+
+<!-- 책 개요 -->
+<section class="sheet" id="sheet-overview">
+  <div class="grab"></div>
+  <h2><span id="ovName">창세기</span> <span class="sub" id="ovGenre"></span></h2>
+  <p class="ovtext" id="ovText"></p>
+  <div class="ovstats" id="ovStats"></div>
+  <h2 style="margin-top:20px;font-size:13px">문학적 개요 <span class="sub">Outline</span></h2>
+  <div id="ovOutline" class="outline-list"></div>
+</section>
+
+<!-- 각주 -->
+<section class="sheet" id="sheet-fn">
+  <div class="grab"></div>
+  <h2>이 장의 각주 <span class="sub" id="fnSub"></span></h2>
+  <div id="fnBody" class="fnlist"></div>
+</section>
+
+<!-- 검색 -->
+<section class="sheet" id="sheet-search">
+  <div class="grab"></div>
+  <h2>성경 검색 <span class="sub" id="searchSub">전체</span></h2>
+  <div class="searchbox">
+    <input id="searchInput" type="search" placeholder="예: 목자, 빛이 생겨라" autocomplete="off">
+    <button id="searchGo">찾기</button>
+  </div>
+  <div id="searchResults" class="results"></div>
+</section>
+
+<div id="toast"></div>
+
+<div class="splash" id="splash">
+  <div class="splashtxt">
+    <div class="t">FRESHLOOK 성경</div>
+    <div class="s" id="splashSub">KOREAN BIBLE · DARK MODE</div>
+  </div>
+</div>
+
+<script src="assets/js/colorize.js"></script>
+<script src="assets/js/render.js"></script>
+<script src="assets/js/parser.js"></script>
+<script src="assets/js/print.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
