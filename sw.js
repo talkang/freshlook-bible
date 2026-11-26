@@ -4,7 +4,7 @@
    · 모든 경로는 상대 경로(./)라 https://<user>.github.io/<repo>/ 같은 하위 경로에서도 동작합니다.
    · 셸 파일을 바꾸면 아래 VERSION 을 올리세요. 그러지 않으면 캐시 우선 정책 때문에
      방문자에게 이전 화면이 계속 보입니다. */
-const VERSION = 'fl-v1.4.0';
+const VERSION = 'fl-v1.4.1';
 const SHELL = VERSION + '-shell';
 const DATA = VERSION + '-data';
 
