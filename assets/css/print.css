@@ -1,5 +1,5 @@
 /* =========================================================
-   print.css — FreshLook 여백성경 조판 (출력 / PDF)
+   print.css — 새번역 말씀노트 여백성경 조판 (출력 / PDF)
    · 조판 모달 + 종이 쪽(.fl-page)
    · 인쇄는 @page + @media print 로 브라우저의 PDF 저장을 씁니다.
    · 색은 app.css 의 테마 토큰만 씁니다 (다크 / 화이트 자동).
@@ -237,6 +237,10 @@ body.fl-open{overflow:hidden}
 .fl-pn{
   font-family:var(--ui);font-size:.58em;letter-spacing:.14em;color:#8A7340;
   font-variant-numeric:tabular-nums;
+}
+.fl-pfb{
+  display:block;font-family:var(--ui);font-size:.5em;letter-spacing:.2em;
+  color:#B4AB97;white-space:nowrap;
 }
 
 /* ---------- 본문 블록 ---------- */

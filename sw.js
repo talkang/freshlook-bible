@@ -1,10 +1,10 @@
-/* FreshLook 성경 — Service Worker (셸 전용 배포판)
+/* 새번역 말씀노트 — Service Worker (셸 전용 배포판)
    · 이 저장소에는 성경 본문이 들어 있지 않습니다. 셸 파일만 미리 캐시합니다.
    · 본문은 사용자가 불러온 TXT가 브라우저(IndexedDB)에 저장되어 오프라인에서도 열립니다.
    · 모든 경로는 상대 경로(./)라 https://<user>.github.io/<repo>/ 같은 하위 경로에서도 동작합니다.
    · 셸 파일을 바꾸면 아래 VERSION 을 올리세요. 그러지 않으면 캐시 우선 정책 때문에
      방문자에게 이전 화면이 계속 보입니다. */
-const VERSION = 'fl-v1.3.0';
+const VERSION = 'fl-v1.4.0';
 const SHELL = VERSION + '-shell';
 const DATA = VERSION + '-data';
 

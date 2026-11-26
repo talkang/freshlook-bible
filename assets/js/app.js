@@ -1,5 +1,5 @@
 /* =========================================================
-   app.js — FreshLook 새번역 성경 PWA
+   app.js — 새번역 말씀노트 PWA (셸 전용 배포판)
    ========================================================= */
 (function () {
   'use strict';
@@ -71,7 +71,7 @@
     const sub = $('#themeSub');
     if (sub) sub.textContent = light ? 'White Mode' : 'Dark Mode';
     const splash = $('#splashSub');
-    if (splash) splash.textContent = 'KOREAN BIBLE · ' + (light ? 'WHITE MODE' : 'DARK MODE');
+    if (splash) splash.textContent = '표준새번역 · ' + (light ? 'WHITE MODE' : 'DARK MODE');
     $$('#seg-theme button').forEach(b =>
       b.classList.toggle('on', b.dataset.v === (light ? 'light' : 'dark')));
 
@@ -478,9 +478,9 @@
     const ch = $('#chapter');
     if (ch) ch.innerHTML = '';
     const tb = $('#topBook');
-    if (tb) tb.textContent = 'FreshLook';
+    if (tb) tb.textContent = '새번역';
     const tc = $('#topChap');
-    if (tc) tc.textContent = '성경';
+    if (tc) tc.textContent = '말씀노트';
   }
 
   function hideWelcome() {

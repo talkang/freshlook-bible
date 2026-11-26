@@ -1,7 +1,7 @@
 {
-  "name": "FreshLook 성경",
-  "short_name": "FreshLook",
-  "description": "가지고 있는 성경 TXT를 불러와 FreshLook 서식(대화·시·편지 조판, 색상 코드, 다크/화이트)으로 읽는 한국어 성경 PWA. 앱에는 본문이 들어 있지 않습니다.",
+  "name": "새번역 말씀노트",
+  "short_name": "말씀노트",
+  "description": "가지고 있는 성경 TXT를 불러와 대화·시·편지 조판과 8색 코드, 다크/화이트로 읽는 한국어 성경 앱(PWA). 앱에는 본문이 들어 있지 않습니다.",
   "lang": "ko",
   "dir": "ltr",
   "start_url": "./index.html",

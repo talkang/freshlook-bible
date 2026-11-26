@@ -2,11 +2,11 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>FreshLook 성경 — 내 TXT로 읽기</title>
+<title>새번역 말씀노트 — 내 TXT로 읽기</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=5">
 <meta name="theme-color" content="#000000">
 <meta name="color-scheme" content="dark light">
-<meta name="description" content="가지고 있는 성경 TXT를 불러와 FreshLook 서식(대화·시·편지 조판, 8색 코드, 다크/화이트)으로 읽는 한국어 성경 PWA. 앱에는 본문이 들어 있지 않으며 불러온 본문은 기기에만 저장됩니다.">
+<meta name="description" content="가지고 있는 성경 TXT를 불러와 대화·시·편지 조판과 8색 코드, 다크/화이트로 읽는 한국어 성경 앱(PWA). 앱에는 본문이 들어 있지 않으며 불러온 본문은 기기에만 저장됩니다.">
 <script>
 /* 저장된 테마를 첫 화면 전에 적용합니다 (저장소가 막히면 무시하고 다크) */
 (function(){try{if(localStorage.getItem('fl.theme.v1')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();
@@ -37,8 +37,8 @@
 <main id="reader">
   <section id="welcome" hidden>
     <div class="wl">
-      <div class="wl-eyebrow">FRESHLOOK · KOREAN BIBLE PWA</div>
-      <h1 class="wl-title">내 성경 TXT로 읽는<br>FreshLook 조판 성경</h1>
+      <div class="wl-eyebrow">새번역 말씀노트 · KOREAN BIBLE PWA</div>
+      <h1 class="wl-title">내 성경 TXT로 읽는<br>새번역 말씀노트</h1>
       <p class="wl-lead">이 앱은 성경 본문을 담고 있지 않습니다. 가지고 있는 성경 TXT 파일을 한 번 불러오면 66권 전체를 대화·시·편지 조판과 8색 색상 코드로 읽고, 검색하고, 인쇄하거나 PDF로 저장할 수 있습니다.</p>
       <button class="wl-import" id="btn-import-main">📄 내 새번역 TXT 파일 불러오기</button>
       <p class="wl-note">불러온 본문은 <b>이 기기의 브라우저 저장소</b>에만 저장되고 어디로도 전송되지 않습니다. 한 번 불러오면 인터넷 없이도 열립니다.</p>
@@ -141,7 +141,7 @@
   </div>
   <div class="row">
     <div class="lab">정보</div>
-    <div class="hint" style="text-align:right">본문 미포함 · 불러온 본문 © 해당 권리자<br>FreshLook 조판 · PWA v1.3</div>
+    <div class="hint" style="text-align:right">본문 미포함 · 불러온 본문 © 해당 권리자<br>새번역 말씀노트 · PWA v1.4</div>
   </div>
   <input type="file" id="file-input" accept=".txt,text/plain" hidden>
 </section>
@@ -189,7 +189,7 @@
 
 <div class="splash" id="splash">
   <div class="splashtxt">
-    <div class="t">FRESHLOOK 성경</div>
+    <div class="t">새번역 말씀노트</div>
     <div class="s" id="splashSub">KOREAN BIBLE · DARK MODE</div>
   </div>
 </div>

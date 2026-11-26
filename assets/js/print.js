@@ -1,5 +1,5 @@
 /* =========================================================
-   print.js — FreshLook 여백성경 조판 · 출력 / PDF
+   print.js — 새번역 말씀노트 여백성경 조판 · 출력 / PDF
    · 책별(또는 장 범위)을 종이 쪽으로 나누어 조판하고,
      브라우저 인쇄 대화상자로 PDF 저장 / 인쇄합니다.
    · 단면 / 양면(바깥쪽 여백 교대) · A4·B5·A5 · 필기 여백(무지·줄·점·모눈)
@@ -460,6 +460,7 @@
       '</div>' +
       '<div class="fl-pf" style="height:' + fx(g.m.bottom) + 'mm">' +
         '<div class="fl-pfw" style="width:' + fx(g.textW) + 'mm">' +
+          '<span class="fl-pfb">새번역 말씀노트</span>' +
           '<i></i><span class="fl-pn">' + pg.no + '</span>' +
         '</div>' +
       '</div>';
@@ -691,7 +692,7 @@
     el.setAttribute('aria-label', '출력 / PDF');
     el.innerHTML =
       '<div class="fl-mh">' +
-        '<div><span class="fl-eyebrow">여백성경 조판</span><h2>출력 / PDF</h2></div>' +
+        '<div><span class="fl-eyebrow">새번역 말씀노트 · 여백성경</span><h2>출력 / PDF</h2></div>' +
         '<span class="fl-sum" id="flSum">–</span>' +
         '<button class="fl-x" id="flClose" type="button" aria-label="닫기">✕</button>' +
       '</div>' +
