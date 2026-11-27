@@ -23,11 +23,17 @@
   for (let i = 45; i <= 66; i++) EPISTLES[String(i).padStart(2, '0')] = 1;
 
   const DOC_NOUN = '(편지|칙령|조서|회신|글|금령|증서|비문|문서|상소문)';
-  const DOC_INTRO = new RegExp(DOC_NOUN + '[^."]{0,24}?(썼|써서|쓰고|써|보냈|보낸|보내|내렸|내린|내리|전했|전하|씁니|기록|적혀|적어|반포|올렸|올리)');
+  const DOC_INTRO = new RegExp(DOC_NOUN + '[^."]{0,24}?(썼|써서|쓰고|써|보냈|보낸|보내|내렸|내린|내리|전했|전하|씁니|기록|적혀|적어|적은|반포|올렸|올리)');
   const DOC_FOLLOW = new RegExp(DOC_NOUN + '[^.]{0,20}?다음과 같');
+  // 왕에게 사신을 보내어 전하는 말 — 서신(편지)과 같은 꼴로 묶는다
+  const DOC_ENVOY = /(?:전령|전갈|사신)을?\s*보내[어여]?,?\s*(?:이렇게\s*)?말하였/;
+  const CITE_FRAME = /(?:율법책|서판|성경|글|책)[^.]{0,4}?(?:기록|쓰여|적혀)/;
+  // 짧은 인용 뒤에 붙는 서술(…"하고 말하였다.) — 한 문장짜리 인용은 박스로 만들지 않는다
+  const BOX_TRAIL_TAG = /^["']?\s*(?:고|라고|하고|하며|면서)?\s*[^.]{0,14}?(?:하였다|말하였다|선포하였다|외쳤다|전하였다|일렀다|명령하였다|썼다|보냈다)\.?$/;
   const DOC_TITLE = [
-    [/칙령/, '칙령'], [/조서/, '조서'], [/회신/, '회신'], [/금령/, '금령'],
-    [/증서|계약서/, '문서'], [/편지|글|문서|비문/, '편지']
+    [/칙령/, '칙령'], [/조서/, '조서'], [/회신|회답/, '회신'], [/금령/, '금령'],
+    [/증서|계약서/, '문서'], [/전령|전갈|사신/, '전령'],
+    [/편지|글|문서|비문|상소문|서신/, '편지']
   ];
   const HEAD_RE = /<([^<>]{1,120})>/g;
   const SENT_END = ['.', '?', '!', '다', '요', '니', '오', '까', '죠', '"', "'", ')', ':'];
@@ -150,37 +156,106 @@
     return false;
   }
 
-  function findLetterGroups(verses) {
-    const groups = {};
+  const isHangul = (ch) => !!ch && ch >= '\uac00' && ch <= '\ud7a3';
+
+  /* 문서 도입 표지. 이름 속의 글자(예: 디글랏빌레셀의 '글')는 걸러 낸다. */
+  function docMarker(head) {
+    let best = null;
+    for (const rx of [DOC_INTRO, DOC_FOLLOW, DOC_ENVOY]) {
+      const g = new RegExp(rx.source, 'g');
+      let m;
+      while ((m = g.exec(head))) {
+        const prev = m.index > 0 ? head[m.index - 1] : '';
+        if (isHangul(prev) && prev !== '의') continue;
+        if (CITE_FRAME.test(head.slice(m.index, m.index + m[0].length + 8))) continue;
+        if (!best || m.index < best.index) best = m;
+        break;
+      }
+    }
+    return best;
+  }
+
+  function docTitle(head, mo) {
+    const phrase = mo ? head.slice(mo.index, mo.index + mo[0].length) : '';
+    for (const [rx, name] of DOC_TITLE) if (rx.test(phrase)) return name;
+    for (const [rx, name] of DOC_TITLE) if (rx.test(head)) return name;
+    return '문서';
+  }
+
+  /* 본문에 인용된 문서(편지·칙령·조서…)를 찾는다.
+     돌려주는 값: {시작 절: {ttl, body{절인덱스:본문}, lead, tail, start, end, intro}}
+     박스 안에는 인용된 문서 본문만 담고, 도입 문장과 마무리 서사는 밖에 남긴다. */
+  function findDocuments(verses) {
+    const docs = {};
+    const N = verses.length;
     let i = 0;
-    while (i < verses.length) {
-      const [n, t] = verses[i];
-      const head = t.replace(/^[○\s]+/, '');
-      const c1 = DOC_INTRO.exec(head), c2 = DOC_FOLLOW.exec(head);
-      const mo = (c1 && c2) ? (c1.index <= c2.index ? c1 : c2) : (c1 || c2);
+    while (i < N) {
+      const text = verses[i][1];
+      const head = text.replace(/^[○\s]+/, '');
+      const off = text.length - head.length;
+      const mo = docMarker(head);
+      if (!mo) { i++; continue; }
       const qpos = head.indexOf('"');
-      const okDoc = mo && (qpos < 0 || mo.index < qpos) &&
-        !/(서판|율법책|책에|예언자들이)/.test(head.slice(0, mo.index + 1));
-      if (okDoc && !head.includes('"') && i + 1 < verses.length &&
-          verses[i + 1][1].replace(/^[○\s]+/, '').startsWith('"')) {
-        let title = '편지';
-        for (const [rx, name] of DOC_TITLE) if (rx.test(t)) { title = name; break; }
-        let j = i + 1, collected = [], depth = 0;
-        while (j < verses.length && collected.length < 30) {
-          const s = verses[j][1];
-          collected.push(verses[j][0]);
-          depth += (s.match(/"/g) || []).length;
-          if (depth % 2 === 0 && s.replace(/\s+$/, '').endsWith('"')) break;
-          j++;
+      let si, qAt;
+      if (qpos >= 0 && qpos > mo.index) {
+        si = i; qAt = off + qpos;
+        if ((text.slice(0, qAt).match(/"/g) || []).length % 2) { i++; continue; }
+      } else if (qpos < 0 && i + 1 < N &&
+                 verses[i + 1][1].replace(/^[○\s]+/, '').startsWith('"')) {
+        si = i + 1; qAt = verses[i + 1][1].indexOf('"');
+      } else { i++; continue; }
+
+      const body = {}; let closed = false, tail = '';
+      let j = si, p = qAt + 1;
+      while (j < N && j - si < 30) {
+        const txt = verses[j][1];
+        if (j !== si) p = 0;
+        const k = txt.indexOf('"', p);
+        if (k < 0) { body[j] = txt.slice(p); j++; continue; }
+        const pre = txt.slice(0, k).replace(/\s+$/, '');
+        body[j] = txt.slice(p, k);
+        if (pre.replace(/[○\s]/g, '') && !pre.endsWith('○')) {
+          closed = true; tail = txt.slice(k + 1).trim();
+        } else {
+          tail = txt.slice(k).trim();     // '○"' 처럼 새 인용이 시작되면 문서 끝
         }
-        if (collected.length >= 2) {
-          groups[collected[0]] = [title, collected];
-          i = j + 1; continue;
+        break;
+      }
+      for (const k of Object.keys(body)) if (!body[k].trim()) delete body[k];
+      const blen = Object.values(body).reduce((a, s) => a + norm(s).length, 0);
+      const minLen = DOC_ENVOY.test(head) ? 35 : 50;
+      if (!blen || blen < minLen || !(body[si] || '').trim()) { i++; continue; }
+      if (!closed && j - si >= 30) { i++; continue; }
+      if (closed && tail && tail.length <= 22 && BOX_TRAIL_TAG.test(tail)) { i++; continue; }
+      const lead = si === i ? verses[i][1].slice(0, qAt) : verses[i][1];
+      const end = Math.max.apply(null, Object.keys(body).map(Number));
+      docs[verses[si][0]] = { ttl: docTitle(head, mo), body: body, lead: lead,
+                              tail: tail, start: si, end: end, intro: i };
+      i = end + 1;
+    }
+    return docs;
+  }
+
+  /* 절마다 조각 목록: ['n', 서사] / ['d', 문서번호, 본문] */
+  function docParts(cleaned, docs) {
+    const parts = cleaned.map((r) => [['n', r[1]]]);
+    for (const key of Object.keys(docs)) {
+      const doc = docs[key];
+      const s = doc.start, e = doc.end;
+      for (let idx = s; idx <= e; idx++) {
+        const b = doc.body[idx] || '';
+        if (!b.trim()) continue;
+        const piece = ['d', key, b];
+        if (idx === s) {
+          const lead = (s === doc.intro && doc.lead.trim()) ? [['n', doc.lead]] : [];
+          parts[s] = lead.concat([piece]);
+        } else {
+          parts[idx] = [piece];
         }
       }
-      i++;
+      if (doc.tail.trim()) parts[e] = parts[e].concat([['n', doc.tail]]);
     }
-    return groups;
+    return parts;
   }
 
   function epistleSections(cleaned) {
@@ -298,12 +373,8 @@
         });
 
         const plain = cleaned.map(r => [r[0], r[1]]);
-        const groups = EPISTLES[bid] ? {} : findLetterGroups(plain);
-        const inLetter = {}, letterTitle = {};
-        for (const hv of Object.keys(groups)) {
-          letterTitle[hv] = groups[hv][0];
-          for (const n of groups[hv][1]) inLetter[n] = hv;
-        }
+        const docs = EPISTLES[bid] ? {} : findDocuments(plain);
+        const pieces = docParts(cleaned, docs);
         let epiHead = [], epiClose = [];
         if (EPISTLES[bid]) {
           [epiHead, epiClose] = epistleSections(cleaned);
@@ -319,29 +390,39 @@
           blocks.push(curBlock); curVerse = null; return curBlock;
         };
 
-        for (const [v, text, fns] of cleaned) {
-          if (epiHead.length && v === epiHead[0]) newBlock('lt', { ttl: '서신 · 인사' });
-          else if (epiClose.length && v === epiClose[0]) newBlock('lt', { ttl: '서신 · 맺음' });
-
-          if (inLetter[v] !== undefined) {
-            const h = inLetter[v];
-            if (!curBlock || curBlock.lid !== h) newBlock('lt', { ttl: letterTitle[h], lid: h });
-            const bt = boxText(text);
-            const last = curBlock.vs[curBlock.vs.length - 1];
-            if (last && last.n === v) last.t += ' ' + bt;
-            else curBlock.vs.push({ n: v, t: bt });
-            continue;
-          }
+        cleaned.forEach(([v, text, fns], idx) => {
           if ((epiHead.length && epiHead.indexOf(v) >= 0) || (epiClose.length && epiClose.indexOf(v) >= 0)) {
+            // 서신 인사·맺음 박스 — 소제목은 박스 밖에 남겨 개요에 살린다
+            for (const [kind, seg] of segmentVerse(text)) {
+              if (kind !== 'h') continue;
+              blocks.push({ k: 'h', l: 1, t: seg, v });
+              outline.push({ c, v, t: seg });
+              curBlock = null; curVerse = null;
+            }
+            if (epiHead.length && v === epiHead[0]) newBlock('lt', { ttl: '서신 · 인사' });
+            else if (epiClose.length && v === epiClose[0]) newBlock('lt', { ttl: '서신 · 맺음' });
             if (!curBlock || curBlock.k !== 'lt') newBlock('lt', { ttl: '서신' });
             const bt = boxText(text);
             const last = curBlock.vs[curBlock.vs.length - 1];
             if (last && last.n === v) last.t += ' ' + bt;
             else curBlock.vs.push({ n: v, t: bt });
-            continue;
+            return;
           }
 
-          for (const [kind, seg] of splitParagraphs(segmentVerse(text))) {
+          for (const piece of pieces[idx]) {
+            // 문서 박스: 인용된 본문만
+            if (piece[0] === 'd') {
+              const did = piece[1], body = piece[2];
+              if (!curBlock || curBlock.lid !== did) newBlock('lt', { ttl: docs[did].ttl, lid: did });
+              const bt = boxText(body);
+              if (!bt) continue;
+              const last = curBlock.vs[curBlock.vs.length - 1];
+              if (last && last.n === v) last.t += '\n' + bt;
+              else curBlock.vs.push({ n: v, t: bt });
+              continue;
+            }
+
+          for (const [kind, seg] of splitParagraphs(segmentVerse(piece[1]))) {
             if (kind === 'h') {
               let lvl = 1;
               if (!firstHeadingDone && isPoetry(bid, c, v) && !/^제\d권/.test(seg)) lvl = 2;
@@ -364,7 +445,8 @@
               else { curVerse = { n: v, t: seg }; curBlock.vs.push(curVerse); }
             }
           }
-        }
+          }
+        });
 
         for (const bl of blocks) delete bl.lid;
         outChapters.push({ n: c, b: blocks.filter(bl => (bl.vs && bl.vs.length) || bl.k === 'h'), fn: fnTable });
